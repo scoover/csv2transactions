@@ -2,14 +2,21 @@
 Simple script to import &amp; remap CSV (comma separated values) files from your Google Drive into a spreadsheet. 
 *This script works with Tiller Money spreadsheets but is not created, published or maintained by Tiller Money.*
 
-This is a simple import script with limited error checking. Import rules must be manually created for each import-CSV file type. There are no provisions in the current build to recognize various csv formats or host multiple import rules (though these improvements would not be difficult to build out).
 
+## What It Does
 This script performs the following actions:
 - Requests filename of CSV file stored in user's Google Drive
 - Loads and parses requested CSV file
 - Maps imported data to Transactions sheet headers per rules defined in `mapping`, `metadata` and `invertAmountPolarity`
 - Creates new rows at the top of the Transactions sheet
 - Inserts new data into the Transactions sheet
+
+## Limitations
+This is a very simple first-pass at the problem of importing CSV line-items into a Tiller-Money-compatible Transactions sheet.
+- Extremely limited error checking
+- Import rules must be manually created for each import-CSV file type
+- No provisions to recognize various csv formats 
+- No provisions to for multiple import rules
 
 ## Setup
 
