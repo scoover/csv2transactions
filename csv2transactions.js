@@ -169,4 +169,6 @@ function importCsv() {
   // write the `output` array to the destination sheet
   transactions.insertRowsBefore(2, output.length);
   transactions.getRange(2, 1, output.length, output[0].length).setValues(output);
+
+  SpreadsheetApp.flush()
 }
