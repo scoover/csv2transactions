@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <script>
+        window.addEventListener('load', populateSheetSelect);  
+
+        function populateSheetSelect() {
+            // get the sidebar configuration object from the template-calling function
+            var sheetNames = JSON.parse(<?= sheets ?>);
+            // create the options html for the dropdown
+            $('#sheet-name-select').empty();  
+            sheetNames.forEach(function(name) { 
+                $('#sheet-name-select').append($('<option />', { 'value': name }).text(name)); 
+            });
+        }
+
+        function selectSheetName() {
+            google.script.run.importTransactions($('#sheet-name-select').val());
+            google.script.host.close();
+        }
+    </script>
+  </head>
+   
+  <body>
+    <div class="container">
+        <label for="sheet-name-select">Sheet containing imported CSV data</label>
+        <select class="form-control form-control-sm" id="sheet-name-select"></select>
+
+        <div class="row" style="margin-top: 2em;">
+            <div class="col text-center">
+                <button class="btn btn-primary" onclick="selectSheetName();">Submit</button>
+                <button class="btn btn-danger" onclick="google.script.host.close();">Cancel</button>
+            </div>
+        </div>
+    </div>
+  </body>
+</html>

@@ -1,128 +1,97 @@
-////////////////////////////////////////////////////
-// 
-// CSV IMPORT RULES
-// ----------------
-// Change this section to work with your CSV import file.
-// (Example below set up for Target RedCard credit card.)
-//
-// `mapping` object defines mapping from Tiller spreadsheet header to csv-import header
-// the first value is the Tiller Transactions sheet header, the second value is the csv-import header
-var mapping = {
-  'Date': 'Trans Date',
-  'Category': null,
-  'Amount': 'Amount',
-  'Transaction ID': null,
-  'Description': 'Merchant Name',
-  'Full Description': 'Merchant Name',
-  'Category Hint': null,
-  'Account': null,
-  'Account #': 'Originating Account Last 4',
-  'Account ID': null,
-  'Institution': null,
-};
-// `metadata` array defines imported headers that will be added to JSON object in Metadata column if present
-var metadata = [ 'Posting Date', 'Type', 'Category', 'Merchant City', 'Merchant State', 'Description', 'Transaction Type' ];
-// set `invertAmountPolarity` to true to invert polarity of Amount column value
-var invertAmountPolarity = true;
-// 
-////////////////////////////////////////////////////
-
 // onOpen: setup menu bar navigation
 function onOpen() {
   SpreadsheetApp.getUi()
-    .createMenu('Simple CSV')
-    .addItem('Import from Google Drive', 'importCsv')
+    .createMenu('Simple Import')
+    .addItem('Import transactions', 'selectSourceSheet')
     .addToUi();
 };
 
-// importCsv: import csv file (from Google Drive) into the spreadsheet based on `mapping`, `metadata` and `invertAmountPolarity`
-function importCsv() {
-  var ui = SpreadsheetApp.getUi();
-
-  // load the moment library for date/time handling (used for Month + Week columns and sheet name timestamp)
-  eval(UrlFetchApp.fetch('https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js').getContentText());
-
-  // fetch the Transactions sheet
+// selectSourceSheet: prompt user to select sheet containing imported data
+function selectSourceSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var allSheets = [ ];
+
+  // get the names of all sheets in the spreadsheet 
+  // exclude sheets with known names (i.e. not likely to be the imported data)
+  ss.getSheets().forEach(function(sheet) {      
+    if(['Transactions', 'Balance History', 'Categories', 'Monthly Budget', 'Yearly Budget', 'Accounts', 'Balances', 'Insights']
+      .indexOf(sheet.getName()) == -1)
+    allSheets.push(sheet.getName());
+  });
+
+  // create a modal prompt for the user to select the sheet name from a dropdown
+  var form = HtmlService.createTemplateFromFile('select-sheet');
+  form.sheets = JSON.stringify(allSheets.sort());
+  SpreadsheetApp.getUi().showModalDialog(
+    form.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME).setHeight(150).setWidth(400),
+    'Select Sheet');
+}
+
+// importTransactions: remap the transactions from `importSheetName` to the Transactions sheet
+function importTransactions(importSheetName) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui = SpreadsheetApp.getUi();
+  // get the Transactions sheet
   var transactions = ss.getSheetByName('Transactions');
+  // get the user-selected import data sheet from selectSourceSheet()
+  var importedData = ss.getSheetByName(importSheetName);
 
   // report an error if the Transactions sheet is not present
   if(!transactions) {
     return ui.alert('Missing Sheet', 'A Transactions sheet must be present to run this workflow.', ui.ButtonSet.OK);
   }
-  
-  var t = transactions.getRange(1, 1, 2, transactions.getMaxColumns()).getValues();
-
-  // prompt user for Google Drive filename (csv file for import)
-  // csv file must be first uploaded to the users Google Drive
-  var response = ui.prompt('CSV Filename', 'Google Drive filename:', ui.ButtonSet.OK_CANCEL);
-  // cancel execution if user presses cancel or the filename provided is blank
-  if((response.getSelectedButton() == ui.Button.CANCEL) || !response.getResponseText().length) { return; }
-  // scan the user's Google Drive for the file and ACCEPT THE FIRST MATCH!
-  if(!DriveApp.getFilesByName(response.getResponseText()).hasNext()) {
-    return ui.alert('Not Found', 'No file with name \''+response.getResponseText()+'\' found in your Google Drive.', ui.ButtonSet.OK);
+  // report an error if the imported data sheet is no longer present
+  else if(!importedData) {
+    return ui.alert('Missing Sheet', 'The sheet you selected for import could no longer be found.', ui.ButtonSet.OK);
   }
-
-  // load and parse the first matching file with the provided filename
-  var file = DriveApp.getFilesByName(response.getResponseText()).next();
-  var data = Utilities.parseCsv(file.getBlob().getDataAsString());
+  
+  // get the (value) contents of the Transactions sheet - need headers to map data
+  var t = transactions.getRange(1, 1, 1, transactions.getMaxColumns()).getValues();
+  // get the (value) contents of the import data sheet
+  var data = importedData.getRange(1, 1, importedData.getMaxRows(), importedData.getMaxColumns()).getValues();
 
   // create an output array for imported data
   var output = [ ];
 
-  // iterate through the imported rows in `data` (skip header row)
-  for(var row = 1; row < data.length; row++) {
+  // iterate through the imported rows in `data` (skip 2 rows - mapping row + import header row)
+  for(var row = 2; row < data.length; row++) {
     var newRow = [ ];
     var value = null;
-    var hasValues = false;
 
     // iterate through the columns in the order of the Transactions sheet header
     for(var col = 0; col < t[0].length; col++) {
       // get the header name from the column at index `col`
       var columnName = t[0][col];
 
-      // skip over columns where the column header is not present in the `mapping` object
-      if(!mapping.hasOwnProperty(columnName)) { 
-        newRow.push(null);
-        continue;
-      }
+      // set `mapColumn` to the (first) index of the column in `importedData` mapped to `columnName`
+      var mapColumn = data[0].indexOf(columnName);
+      // if no `mapColumn` is found, try with a minus prefix (indicating a mapping with inverted polarity)
+      if(mapColumn == -1) { mapColumn = data[0].indexOf('-'+columnName) }
 
-      // set `mapValue` to the imported data column header name with the relevant data
-      var mapValue = mapping[columnName];
-      
-      // skip columns that are mapped to data that do not exist in the imported data
-      // if a match is not found in the imported data headers, use the literal string provided in the mapping object
-      if((typeof mapValue !== 'string') || (data[0].indexOf(mapValue) == -1)) { 
-        newRow.push(mapValue);
+      // skip over columns where the column header is not mapped in `importedData` or where column name is reserved
+      if(mapColumn == -1 || (['Month','Week','Date Added','Metadata'].indexOf(columnName) != -1)) { 
+        newRow.push(null);
         continue;
       }
 
       // fetch the field value based on the column remapping
-      value = data[row][data[0].indexOf(mapValue)];
+      value = data[row][mapColumn];
 
-      // if the cell is an empty string, push null into the newRow array and don't set `hasValues` (to true) for the new row
+      // if the cell is empty, push null into the newRow array
       if((typeof value === 'string') && !value.length) { 
         newRow.push(null);
         continue;
       }
-      // when processing the 'Amount' column, convert the parsed string "value" to a number
-      else if(columnName == 'Amount') {
-        // if the first character is a parenthesis, assume the value is wrapped in parentheses to indicate a negative value
-        var parenthesis = value[0] == '(';
-        // use a regex to strip the string "value" to numbers, decimals and negative signs then convert to number
-        // if the `invertAmountPolarity` is true, invert the polarity of the Amount column value
-        value = Number(value.replace(/[^0-9.-]+/g,'')) * (parenthesis? -1:1) * (invertAmountPolarity? -1:1);
-      }
+      // invert polarity of columns mapped with header prefix '-'
+      else if((typeof value === 'number') && (data[0][mapColumn][0] == '-')) { value *= -1; }
 
-      // if we made it this far, the column's value is non blank, so mark `hasValues` as true (the row will be written)
-      hasValues = true;
       // push the new (column) value to the new row array
       newRow.push(value);
     }
 
-    // if `hasValues` was never set to true, the row has no non-blank values, so skip writing it to the output array
-    if(!hasValues) { continue; }
-    
+    // if all columns contain blank values, skip writing it to the output array
+    if(newRow.every(function(v){ return v == null; })) { continue; }
+
     // now that all the values have been ingested from the import row, add values for special columns: Month, Week, Date Added and Metadata
     // iterate over the columns in `newRow`
     for(var col = 0; col < newRow.length; col++) {
@@ -139,26 +108,29 @@ function importCsv() {
 
         // create the date value for the "Month" column
         if(columnName == 'Month') {
-          newRow[col] = moment(dateValue).startOf('month').format('M/D/YYYY');
+          newRow[col] = new Date(dateValue.getFullYear(), dateValue.getMonth(), 1);
         }
         // create the date value for the "Week" column
         else if (columnName == 'Week') {
-          newRow[col] = moment(dateValue).startOf('week').format('M/D/YYYY');
+          newRow[col] = new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate() - dateValue.getDay());
         }
       }
       // if the column is "Date Added", insert today's date
       else if(columnName == 'Date Added') {
-        newRow[col] = moment().format('M/D/YYYY');
+        newRow[col] = new Date();
       }
-      // if the column is "Metadata", create a stringified JSON object with the column headers in the `metadata` array
+      // if the column is "Metadata", create a stringified JSON object with the all columns mapped to ="Metadata"
       else if(columnName == 'Metadata') {
         var m = { };
 
-        metadata.forEach(function (header) {      
-          if(data[0].indexOf(header) != -1) { m[header] = data[row][data[0].indexOf(header)]; }
-        });
+        // iterate through all columns in the imported data
+        for(var c = 0; c < data[0].length; c++) {
+          // if the column has header "Metadata", add the cell data to the `m` object
+          if(data[0][c] == 'Metadata') { m[data[1][c]] = data[row][c]; }
+        }
 
-        newRow[col] = JSON.stringify(m);
+        // write a stringified `m` to the row if it contains data
+        newRow[col] = Object.keys(m).length? JSON.stringify(m):null;
       }
     }
 
@@ -169,6 +141,8 @@ function importCsv() {
   // write the `output` array to the destination sheet
   transactions.insertRowsBefore(2, output.length);
   transactions.getRange(2, 1, output.length, output[0].length).setValues(output);
-
+  // flush SpreadsheetApp to update the data
   SpreadsheetApp.flush()
+  // make Transactions the active sheet
+  SpreadsheetApp.setActiveSheet(transactions);
 }
