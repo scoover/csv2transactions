@@ -6,7 +6,7 @@ Simple script to remap imported CSV (comma separated values) files into the Tran
 ## What It Does
 This script performs the following actions:
 - Requests sheet name of your imported CSV data
-- Maps imported data to Transactions sheet headers per the column mapping in the first row (see belwow)
+- Maps imported data to Transactions sheet headers per the column mapping in the first row (see below)
 - Creates new rows at the top of the Transactions sheet &amp; inserts the data
 
 ## Limitations
