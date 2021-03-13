@@ -23,15 +23,19 @@ This script runs within a Google Sheets spreadsheet as a bound script.
 1. Open your Google Sheets spreadsheet.
 2. Click on `Tools/Script` editor in the menu bar.
 3. Open the `csv2transactions.js` file in this project and copy the contents into the clipboard.
-4. Select all in the file and overwrite by pasting the clipboard contents into the `Code.gs` file in the Script Editor.
+4. Select all contents of the file and overwrite by pasting the clipboard contents into the `Code.gs` file in the Script Editor.
 5. Save the `Code.gs` file. (You will be prompted for a project filename.)
 6. Open the `select-sheet.html` file in this project and copy the contents into the clipboard.
 7. In the Script Editor, create a new HTML file using the `File/New/HTML file` menu flow.
 8. Enter the filename "select-sheet.html" for the new file.
-9. Select all in the file and overwrite by pasting the clipboard contents in the Script Editor.
+9. Select all contents of the file and overwrite by pasting the clipboard contents in the Script Editor.
 10. Save the `select-sheet.html` file.
-11. Click back to the Google Sheets spreadsheet tab.
-12. Reload the browser tab with the spreadsheet.
+11. Open the `appsscript.json` file in this project and copy the contents into the clipboard.
+12. In the Script Editor, open `appsscript.json` using the `Using/Show manifest file` menu flow.
+13. Select all contents of the file and overwrite by pasting the clipboard contents in the Script Editor.
+14. Save the `appsscript.json` file.
+15. Click back to the Google Sheets spreadsheet tab.
+16. Reload the browser tab with the spreadsheet.
 
 Once the spreadsheet tab reloads (be patient), you will see a new option in the menu bar "Simple CSV". You have installed the script.
 
@@ -84,7 +88,7 @@ Before running the script, you can new columns with formula-driven values or sta
 - Other than the special case of "Metadata", if a column mapping (e.g. "Description") is used more than once, the first mapped column will be used.
 
 ### Run the Simple CSV Script
-1. Run the script using the `Simple CSV/Import transactions` menu flow.
-2. At the prompt, select the sheet name containing your eimported data (with your manual header mapping row).
+1. Run the script using the `Simple CSV/Import transactions` menu flow. (If it is your first time running the script, you will be asked to accept the required permissions and will need to run the script again.)
+2. At the prompt, select the sheet name containing your imported data (with your manual header mapping row).
 3. Click the `Submit` button.
 4. Watch as the imported data is mapped into your Transactions sheet.
