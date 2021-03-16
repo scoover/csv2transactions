@@ -19,23 +19,27 @@ This is a very simple first-pass at the problem of importing CSV line-items into
 
 This script runs within a Google Sheets spreadsheet as a bound script. 
 
+There are a few steps to get up and running. *Most of these steps are one-time steps.* Once you have installed the scripts and mapped the columns for your CSV data sources, using this workflow will be quick and easy.
+
 ### Installation
-1. Open your Google Sheets spreadsheet.
-2. Click on `Tools/Script` editor in the menu bar.
-3. Open the `csv2transactions.js` file in this project and copy the contents into the clipboard.
+1. Open the `csv2transactions.js` file in this Github project and copy the contents into the clipboard.
+2. Open your Google Sheets spreadsheet.
+3. Click on `Tools/Script` editor in the menu bar.
 4. Select all contents of the file and overwrite by pasting the clipboard contents into the `Code.gs` file in the Script Editor.
-5. Save the `Code.gs` file. (You will be prompted for a project filename.)
-6. Open the `select-sheet.html` file in this project and copy the contents into the clipboard.
+5. Save the `Code.gs` file. 
+6. Open the `select-sheet.html` file above in this Github project and copy the contents into the clipboard.
 7. In the Script Editor, create a new HTML file using the `File/New/HTML file` menu flow.
 8. Enter the filename "select-sheet.html" for the new file.
 9. Select all contents of the file and overwrite by pasting the clipboard contents in the Script Editor.
 10. Save the `select-sheet.html` file.
-11. Open the `appsscript.json` file in this project and copy the contents into the clipboard.
-12. In the Script Editor, open `appsscript.json` using the `Using/Show manifest file` menu flow.
-13. Select all contents of the file and overwrite by pasting the clipboard contents in the Script Editor.
-14. Save the `appsscript.json` file.
-15. Click back to the Google Sheets spreadsheet tab.
-16. Reload the browser tab with the spreadsheet.
+11. In the Script Editor, navigate to and click the `Project Settings` gear in the left side bar. Check the box that says "Show `appsscript.json` manifest file in editor". 
+12. Click back to the `Editor` (`<>`) pane in the left side bar in the Script Editor.
+13. Open the `appsscript.json` fil  e in this Github project and copy the contents into the clipboard.
+14. In the Script Editor, open `appsscript.json` using the `Using/Show manifest file` menu flow.
+15. Select all contents of the file and overwrite by pasting the clipboard contents in the Script Editor.
+16. Save the `appsscript.json` file.
+17. Click back to the Google Sheets spreadsheet tab.
+18. Reload the browser tab with the spreadsheet.
 
 Once the spreadsheet tab reloads (be patient), you will see a new option in the menu bar "Simple CSV". You have installed the script.
 
@@ -64,6 +68,9 @@ There are three steps to importing a CSV file using the `Simple CSV` workflow:
 1. Select the newly-import sheet in your Tiller-Money-compatible spreadsheet. 
 2. Insert a new row at the top of the sheet (above the header from the imported data).
 3. Above each import-file header, type the (exact) name of the Transactions-sheet column where you'd like the data to land. Use Tiller-Money reserved column names like "Date", "Amount", "Description", "Account #", etc.
+
+#### Save and Reuse Your Import Settings
+Pro tip for power users! If you frequently depend on a CSV data source, you can reuse its column-mapping by keeping the imported-dataa sheet in your spreadsheet. Whenever you want to import new data, put the cursor on cell `A2` in the sheet (the cell containing the first header cell of the imported data) and, instead of importing with the "Insert new sheet(s)" setting, select "Replace data at selected cell". If you have derived or formula-driven columns to the right of your data. These will be preserved— a workflow that works great with `ARRAYFORMULA()` formulas (e.g. `={"Concatenated Fields";ARRAYFORMULA(IF(ISBLANK(A2:A),IFERROR(1/0),A2:A&"/"&B2:B))}` or `={"Data Source";ARRAYFORMULA(IF(ISBLANK(A2:A),IFERROR(1/0),"Imported with CSV2Transactions"))}`) driven from the header row 1.
 
 #### Inverting Numbers
 Sometimes numbers require polarity inversion to match the polarity of the Transactions sheet. Adding a minus symbol ('-') before a Tiller-Money reserved column names like "Amount" (e.g. "-Amount") will invert the value when the script is run.
