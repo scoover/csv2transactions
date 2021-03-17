@@ -44,16 +44,16 @@ There are a few steps to get up and running. *Most of these steps are one-time s
 Once the spreadsheet tab reloads (be patient), you will see a new option in the menu bar "Simple CSV". You have installed the script.
 
 ### Accept Permissions
-When you first run the script by clicking `Simple CSV/Import transactions`, you will be asked to accept the following Google account permissions:
+When you first run the script by clicking `Simple Import/Import transactions`, you will be asked to accept the following Google account permissions:
 - View and manage spreadsheets that this application has been installed in
 - Display and run third-party web content in prompts and sidebars inside Google applications
 
 ## Usage
 
-There are three steps to importing a CSV file using the `Simple CSV` workflow:
+There are three steps to importing a CSV file using the `Simple Import` workflow:
 1. Import your CSV file into the spreadsheet.
 2. Add your column mapping to the sheet header.
-3. Run the Simple CSV script.
+3. Run the Simple Import script.
 
 ### Import Your CSV File into the Spreadsheet
 1. Open your Tiller-Money-compatible spreadsheet. 
@@ -94,8 +94,8 @@ Before running the script, you can new columns with formula-driven values or sta
 - Avoid extra spaces (e.g. "_Date" will not map to "Date".).
 - Other than the special case of "Metadata", if a column mapping (e.g. "Description") is used more than once, the first mapped column will be used.
 
-### Run the Simple CSV Script
-1. Run the script using the `Simple CSV/Import transactions` menu flow. (If it is your first time running the script, you will be asked to accept the required permissions and will need to run the script again.)
+### Run the Simple Import Script
+1. Run the script using the `Simple Import/Import transactions` menu flow. (If it is your first time running the script, you will be asked to accept the required permissions and will need to run the script again.)
 2. At the prompt, select the sheet name containing your imported data (with your manual header mapping row).
 3. Click the `Submit` button.
 4. Watch as the imported data is mapped into your Transactions sheet.
