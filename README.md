@@ -2,6 +2,7 @@
 Simple script to remap imported CSV (comma separated values) files into the Transactions sheet of a Tiller-Money-compatible spreadsheet. 
 *This script works with Tiller Money spreadsheets but is not created, published or maintained by Tiller Money.*
 
+For help with setup, configuration & use, check out the [video demo on YouTube](https://www.youtube.com/watch?v=eQLeV3qWpbA).
 
 ## What It Does
 This script performs the following actions:
