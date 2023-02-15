@@ -35,16 +35,39 @@ function importTransactions(importSheetName) {
   var transactions = ss.getSheetByName('Transactions');
   // get the user-selected import data sheet from selectSourceSheet()
   var importedData = ss.getSheetByName(importSheetName);
-
+  var msg = "";
   // report an error if the Transactions sheet is not present
   if(!transactions) {
+    msg = "Transactions sheet not found";
+    console.error(msg);
     return ui.alert('Missing Sheet', 'A Transactions sheet must be present to run this workflow.', ui.ButtonSet.OK);
   }
   // report an error if the imported data sheet is no longer present
   else if(!importedData) {
+    msg = `Selected sheet for importing [${importSheetName}] not found`;
+    console.error(msg);
     return ui.alert('Missing Sheet', 'The sheet you selected for import could no longer be found.', ui.ButtonSet.OK);
   }
-  
+   // check timezone settings in script and sheet and report an error if they don't match
+  var validTimezone = checkTimezone(ss)  
+  // function returns an array with a boolean value and a message
+  if (!validTimezone[0]) {
+    //log issue and prompt user to stop import or continue anyway
+    console.error(validTimezone[1])
+    var prompt = " Stop import?"
+    var response = ui.alert('Timezone Error - stop import?', validTimezone[1] +prompt, ui.ButtonSet.YES_NO);
+    if (response == ui.Button.YES) {
+      msg = "User stopped import due to timezone descrepancy"
+      console.log(msg)
+      return ui.alert('Timezone Discrepancy', 'Import cancelled', ui.ButtonSet.OK);
+    }
+    if (response == ui.Button.NO) {
+      msg = "User selected to continue import despite timezone descrepancy"
+      console.warn(msg)
+      ui.alert('Timezone Discrepancy Ignored', 'Continuing Import', ui.ButtonSet.OK);
+    }
+  }
+
   // get the (value) contents of the Transactions sheet - need headers to map data
   var t = transactions.getRange(1, 1, 1, transactions.getMaxColumns()).getValues();
   // get the (value) contents of the import data sheet
@@ -137,6 +160,9 @@ function importTransactions(importSheetName) {
     // push `newRow` into the output array
     output.push(newRow);
   }
+  // log total number of rows in output array
+  msg = `Total of [${output.length}] new transaction rows to be added from import sheet [${importSheetName}]`
+  console.log(msg)
 
   // write the `output` array to the destination sheet
   transactions.insertRowsBefore(2, output.length);
@@ -145,4 +171,26 @@ function importTransactions(importSheetName) {
   SpreadsheetApp.flush()
   // make Transactions the active sheet
   SpreadsheetApp.setActiveSheet(transactions);
+  // report success
+  msg = `Imported [${output.length}] rows from [${importSheetName}] into Transactions sheet.`
+  console.log(msg)
+  return ui.alert('Success', msg, ui.ButtonSet.OK);
+}
+// check if the script and sheet timezones match
+function checkTimezone(ss) {
+  // get the timezone of the spreadsheet and the script
+  var sheetTimezone = ss.getSpreadsheetTimeZone();
+  var scriptTimezone = Session.getScriptTimeZone();
+ 
+  if (sheetTimezone !== scriptTimezone) {
+    var msg = `Timezone discrepancy detected! Sheet timezone: [${sheetTimezone}] Script timezone: [${scriptTimezone}]`
+    console.warn(msg);
+    //return array with false and message
+    return [false, msg];
+  } else {
+    var msg = `Timezone settings match: Sheet timezone: [${sheetTimezone}] Script timezone: [${scriptTimezone}]`
+    console.log(msg);
+    //return array with true and message
+    return [true, msg];
+  }
 }
